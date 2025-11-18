@@ -33,7 +33,7 @@ export const convertHTMLtoPDF = async (
 
   const page = await browser.newPage();
   await page.setContent(html,{
-    waitUntil: 'domcontentloaded'
+    // waitUntil: 'domcontentloaded'
   });
   const pdf = await page.pdf(configPDF);
   await browser.close();

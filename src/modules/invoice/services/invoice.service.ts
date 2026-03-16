@@ -1,5 +1,5 @@
 import { ISendMailOptions, MailerService } from '@nestjs-modules/mailer';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { isEmpty } from 'lodash';
 import Mail from 'nodemailer/lib/mailer';
 import { resolve } from 'path';
@@ -49,6 +49,8 @@ import { SentMessageInfo } from 'nodemailer';
 import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class InvoiceService {
+  private readonly logger = new Logger(InvoiceService.name);
+
   constructor(
     private readonly invoiceSysService: InvoiceSysService,
     private readonly detailPaymentRepository: DetailPaymentRepository,
@@ -86,9 +88,16 @@ export class InvoiceService {
         infoMatricula?.cod_periodo,
       );
 
-      this.invoiceSysService
-        .registerInvoiceSysApolo(payload.invoiceId)
-        .catch(console.log);
+      try {
+        await this.invoiceSysService.registerInvoiceSysApolo(payload.invoiceId);
+      } catch (error) {
+        const errorDetail =
+          error instanceof Error ? error.stack ?? error.message : `${error}`;
+        this.logger.error(
+          `Fallo sincronizando factura ${payload.invoiceId} con SysApolo`,
+          errorDetail,
+        );
+      }
 
       try {
         await this.registerDiscuountInvoice(payload.invoiceId, discounts);

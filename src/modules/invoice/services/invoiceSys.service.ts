@@ -81,9 +81,14 @@ export class InvoiceSysService {
       await queryRunner.startTransaction();
 
       if (invoiceSys) {
-        this.invoiceRepository
-          .updateStatusVerifySys(ESysApoloStatus.REGISTRADO, invoiceId)
-          .catch(console.log);
+        try {
+          await this.invoiceRepository.updateStatusVerifySys(
+            ESysApoloStatus.REGISTRADO,
+            invoiceId,
+          );
+        } catch (error) {
+          console.log(error);
+        }
         throw new UnprocessableEntity(
           `La factura ${invoiceId} ya se encuentra en sysApolo`,
         );
@@ -104,9 +109,14 @@ export class InvoiceSysService {
 
       await queryRunner.commitTransaction();
       if (!queryRunner.isReleased) await queryRunner.release();
-      this.invoiceRepository
-        .updateStatusVerifySys(ESysApoloStatus.REGISTRADO, invoiceId)
-        .catch(console.log);
+      try {
+        await this.invoiceRepository.updateStatusVerifySys(
+          ESysApoloStatus.REGISTRADO,
+          invoiceId,
+        );
+      } catch (error) {
+        console.log(error);
+      }
       return true;
     } catch (error) {
       console.log(error.toString());
@@ -211,7 +221,7 @@ export class InvoiceSysService {
       detRecibo: generateDescriptionSys(dataDescriptiom),
       valorConcepto: payment.valorPago,
       valorRecaudo: payment.valorPago,
-      pagado: 'N',
+      pagado: 'S',
       ideBanco: 2, //TODO: puntos de pago
       codColegio: infoStudet.cod_colegio,
       codFormaPago: payment.formaPagoId,
@@ -263,8 +273,9 @@ export class InvoiceSysService {
     person: Person,
   ): Promise<string> {
     const { documentType, apellido1, apellido2, nombre1, nombre2 } = person;
+    const nombre2Safe = nombre2 ?? '';
 
-    if (nombre2.length > 15) {
+    if (nombre2Safe.length > 15) {
     }
 
     const codTerSql = await this.thirdPartySysRepository?.query(
@@ -279,9 +290,9 @@ export class InvoiceSysService {
     const digVer = getVerificationGigit(person.id);
     const codTer: string = codTerSql[0].cod_ter ?? '00000';
 
-    const fullName = `${apellido1} ${apellido2 ?? ''} ${nombre1} ${
-      nombre2 ?? ''
-    }`;
+    const fullName = `${apellido1} ${
+      apellido2 ?? ''
+    } ${nombre1} ${nombre2Safe}`;
 
     const thirdPartyCreate: DeepPartial<ThirdPartySys> = {
       id: codTer,
@@ -294,7 +305,7 @@ export class InvoiceSysService {
       priApellido: apellido1,
       segApellido: apellido2 ?? '',
       priNombre: nombre1.split(' ')[0] ?? '',
-      otrNombre: nombre2.split(' ')[0] ?? '',
+      otrNombre: nombre2Safe.split(' ')[0] ?? '',
       claTercero: 'S',
       dirTercero: person.direccion,
       telTercero: person.phone,

@@ -18,7 +18,7 @@ const defaultConfigPDF: puppeteer.PDFOptions = {
 export const convertHTMLtoPDF = async (
   html: string,
   configPDF: puppeteer.PDFOptions = defaultConfigPDF,
-) => {
+): Promise<Buffer> => {
   const browser = await puppeteer.launch({
     executablePath: process.env.CHROME_BIN,
     headless: false,
@@ -32,12 +32,12 @@ export const convertHTMLtoPDF = async (
   });
 
   const page = await browser.newPage();
-  await page.setContent(html,{
+  await page.setContent(html, {
     // waitUntil: 'domcontentloaded'
   });
   const pdf = await page.pdf(configPDF);
   await browser.close();
-  return pdf;
+  return Buffer.from(pdf);
 };
 
 export const compileHBS = (pathTemplate: string, params: object): string => {

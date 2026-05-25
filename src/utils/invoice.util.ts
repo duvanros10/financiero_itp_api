@@ -8,6 +8,13 @@ import { IDescriptionSys, ITotales } from '../interfaces/payment.interface';
 import { DetailInvoice } from '../modules/invoice/entities/detailInvoice.entity';
 import { Package } from '../modules/invoice/entities/package.entity';
 
+const normalizeRate = (value: number): number => {
+  if (Number.isNaN(value)) return 0;
+  if (value < 0) return 0;
+  if (value > 1) return 1;
+  return value;
+};
+
 export const limpiarCampos = (cadena: string = '') => {
   cadena.toString().replace(/[`~!@#$%^&*¬()_|\-=?;:'",.<>\{\}\[\]\\\/]/gim, '');
 };
@@ -23,28 +30,33 @@ export const generateDescriptionSys = (payload: IDescriptionSys): string => {
 export const calcularTotales = (detalle: DetailInvoice[]): ITotales => {
   const totalExtraordinario = detalle
     .map(({ valorUnidad, cantidad, aumento, descuento }) => {
+      const safeDescuento = normalizeRate(Number(descuento));
+      const safeAumento = Number(aumento) < 0 ? 0 : Number(aumento);
       const subtotal = valorUnidad * cantidad;
       //primero se aplica el aumento, para calcular el descuento sobre el resultado obtenido
-      const subtotalDescuento = subtotal * descuento;
-      const subtotalAumento = subtotal * aumento;
+      const subtotalDescuento = subtotal * safeDescuento;
+      const subtotalAumento = subtotal * safeAumento;
       return subtotal - subtotalDescuento + subtotalAumento;
     })
     .reduce((a, b) => a + b, 0);
 
   const totalCompleto = detalle
     .map(({ valorUnidad, cantidad, aumento, descuento }) => {
+      const safeDescuento = normalizeRate(Number(descuento));
+      const safeAumento = Number(aumento) < 0 ? 0 : Number(aumento);
       const subtotal = valorUnidad * cantidad;
       //primero se aplica el aumento, para calcular el descuento sobre el resultado obtenido
-      const subtotalDescuento = subtotal * descuento;
-      const subtotalAumento = subtotal * aumento;
+      const subtotalDescuento = subtotal * safeDescuento;
+      const subtotalAumento = subtotal * safeAumento;
       return subtotal - subtotalDescuento + subtotalAumento;
     })
     .reduce((a, b) => a + b, 0);
 
   const totalOrdinario = detalle
-    .map(({ valorUnidad, cantidad, aumento, descuento }) => {
+    .map(({ valorUnidad, cantidad, descuento }) => {
+      const safeDescuento = normalizeRate(Number(descuento));
       const subtotal = valorUnidad * cantidad;
-      return subtotal - subtotal * descuento;
+      return subtotal - subtotal * safeDescuento;
     })
     .reduce((a, b) => a + b, 0);
 
@@ -59,10 +71,12 @@ export const calcularSubTotal = (
   detInvoice: DeepPartial<DetailInvoice>,
 ): number => {
   const { valorUnidad, cantidad, aumento, descuento } = detInvoice;
+  const safeDescuento = normalizeRate(Number(descuento));
+  const safeAumento = Number(aumento) < 0 ? 0 : Number(aumento);
   const subtotal = valorUnidad * cantidad;
   //primero se aplica el descueto
-  const subtotalDescuento = subtotal * descuento;
-  const subtotalAumento = subtotal * aumento;
+  const subtotalDescuento = subtotal * safeDescuento;
+  const subtotalAumento = subtotal * safeAumento;
   return subtotal - subtotalDescuento + subtotalAumento;
 };
 
@@ -91,14 +105,18 @@ export const calcularTotalExtraOrdinario = (
 
   const totalExtraordinario = detInvoice
     .map(({ valorUnidad, cantidad, aumento, descuento, conceptoId }) => {
+      const safeDescuento = normalizeRate(Number(descuento));
+      const safeAumento = Number(aumento) < 0 ? 0 : Number(aumento);
       if (concepts.some((item) => conceptoId == item)) {
         aumento = config.porcentajeExt;
       }
 
+      const aumentoAplicado = Number(aumento) < 0 ? safeAumento : Number(aumento);
+
       const subtotal = valorUnidad * cantidad;
       //primero se aplica el aumento, para calcular el descuento sobre el resultado obtenido
-      const subtotalDescuento = subtotal * descuento;
-      const subtotalAumento = subtotal * aumento;
+      const subtotalDescuento = subtotal * safeDescuento;
+      const subtotalAumento = subtotal * aumentoAplicado;
       return subtotal - subtotalDescuento + subtotalAumento;
     })
     .reduce((a, b) => a + b, 0);
@@ -160,11 +178,13 @@ export const llenarSubTotalSinAumento = (
 ): DetailInvoice[] => {
   return detInvoice.map((detail) => {
     const { valorUnidad, cantidad, descuento } = detail;
+    const safeDescuento = normalizeRate(Number(descuento));
     const subtotal = valorUnidad * cantidad;
-    const subtotalDescuento = subtotal * descuento;
+    const subtotalDescuento = subtotal * safeDescuento;
 
     return {
       ...detail,
+      descuento: safeDescuento,
       subtotal: subtotal - subtotalDescuento,
     };
   });

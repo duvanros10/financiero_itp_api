@@ -62,4 +62,9 @@ export class GenerateInvoiceDto {
     return Number(value);
   })
   cantidad?: number;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(500)
+  descripcion?: string;
 }

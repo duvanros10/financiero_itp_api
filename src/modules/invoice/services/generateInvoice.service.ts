@@ -67,6 +67,7 @@ export class GenerateInvoiceService {
       personaId,
       programaPersonaId,
       cantidad,
+      descripcion,
     } = payload;
 
     const packageInvoce = await this.packageRepository.findConceptsByCode(
@@ -99,6 +100,7 @@ export class GenerateInvoiceService {
       total,
       categoriaPagoId: packageInvoce.categoriaId,
       cantidad,
+      descripcion,
     };
 
     const invoice = this.consultInvoiceService.generateInvoiceByParams(params);
@@ -124,9 +126,34 @@ export class GenerateInvoiceService {
     const invoiceSave = this.invoiceRepository.create({
       ...duplicateInvoice,
       ...invoiceNew,
+      descripcion: this.resolveInvoiceDescription(payload.descripcion, invoiceNew),
     });
 
     return this.invoiceRepository.save(invoiceSave);
+  }
+
+  private resolveInvoiceDescription(
+    descriptionPayload: string | undefined,
+    invoiceNew: any,
+  ): string {
+    const description = (descriptionPayload ?? '').trim();
+    if (description.length > 0) {
+      return description;
+    }
+
+    const details = Array.isArray(invoiceNew?.detailInvoices)
+      ? invoiceNew.detailInvoices
+      : [];
+
+    const concepts = details
+      .map((detail: any) => (detail?.concept?.descripcion ?? '').trim())
+      .filter((item: string) => item.length > 0);
+
+    if (concepts.length > 0) {
+      return concepts.join(' + ');
+    }
+
+    return `PAGO ${invoiceNew?.codPaquete ?? 'GENERAL'}`;
   }
 
   async getHtmlInvoice(invoiceId: number): Promise<string> {

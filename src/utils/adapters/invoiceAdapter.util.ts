@@ -4,6 +4,13 @@ import { DeepPartial } from 'typeorm';
 import { DetailInvoice } from '../../modules/invoice/entities/detailInvoice.entity';
 import { calcularSubTotal } from '../invoice.util';
 
+const clampRate = (value: number): number => {
+  if (Number.isNaN(value)) return 0;
+  if (value < 0) return 0;
+  if (value > 1) return 1;
+  return value;
+};
+
 export const createDetailInvoice = ({
   packageDetail,
   aumentoExtra = 0,
@@ -29,8 +36,9 @@ export const createDetailInvoice = ({
         concept: detail.concept,
         aumento: detail.descuentoExt == '1' ? aumentoExtra + aumento : aumento,
         cantidad: Number(quantity < 1 ? 1 : quantity),
-        descuento:
-          detail.descuentoExt == '1' ? descuentoExtra + descuento : descuento,
+        descuento: clampRate(
+          Number(detail.descuentoExt == '1' ? descuentoExtra + descuento : descuento),
+        ),
       };
     })
     .map((detail) => {

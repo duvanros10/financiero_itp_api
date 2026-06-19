@@ -29,6 +29,7 @@ import { EmailModule } from './modules/email/email.module';
         username: config.get<string>('MYSQL_SGD_USER'),
         password: config.get<string>('MYSQL_SGD_PASS'),
         database: config.get<string>('MYSQL_SGD_DATABASE'),
+        port: Number(config.get<number>('MYSQL_SGD_PORT')),
         entities: [
           resolve(__dirname, 'modules/invoice/entities/*.entity{.ts,.js}'),
         ],

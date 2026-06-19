@@ -28,6 +28,7 @@ export const environmentsConfig = () => ({
   MYSQL_SGD_USER: process.env.MYSQL_SGD_USER,
   MYSQL_SGD_PASS: process.env.MYSQL_SGD_PASS,
   MYSQL_SGD_DATABASE: process.env.MYSQL_SGD_DATABASE,
+  MYSQL_SGD_PORT: Number(process.env.MYSQL_SGD_PORT),
 
   MSSQL_SYSAPOLO_USER: process.env.MSSQL_SYSAPOLO_USER,
   MSSQL_SYSAPOLO_PASS: process.env.MSSQL_SYSAPOLO_PASS,
@@ -53,6 +54,7 @@ export const envValidationSchema = Joi.object({
   MYSQL_SGD_USER: Joi.string().required(),
   MYSQL_SGD_PASS: Joi.string().required(),
   MYSQL_SGD_DATABASE: Joi.string().required(),
+  MYSQL_SGD_PORT: Joi.number().port().required(),
 
   MSSQL_SYSAPOLO_USER: Joi.string().required(),
   MSSQL_SYSAPOLO_PASS: Joi.string().required(),
